@@ -92,8 +92,11 @@ def main():
         "Literal  : Object value",
         "Unary    : Token operator, Expr right",
     ]
+    stmt_types = ["Expression : Expr expression", "Print      : Expr expression"]
 
     define_ast(output_dir, "Expr", expr_types)
+    define_ast(output_dir, "Stmt", stmt_types)
+
     print("Success.")
 
 

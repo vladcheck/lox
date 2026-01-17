@@ -3,7 +3,6 @@ package lox;
 import lox.Expr.Binary;
 import lox.Expr.Grouping;
 import lox.Expr.Literal;
-import lox.Expr.PolishReverseNotation;
 import lox.Expr.Unary;
 
 public class Interpreter implements Expr.Visitor<Object> {
@@ -108,12 +107,6 @@ public class Interpreter implements Expr.Visitor<Object> {
 		}
 		
 		// Unreachable.
-		return null;
-	}
-
-	@Override
-	public Object visitPolishReverseNotationExpr(PolishReverseNotation expr) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 

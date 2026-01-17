@@ -1,7 +1,5 @@
 package lox;
 
-import lox.Expr.PolishReverseNotation;
-
 class AstPrinter implements Expr.Visitor<String> {
 	String print(Expr expr) {
 		return expr.accept(this);
@@ -42,10 +40,5 @@ class AstPrinter implements Expr.Visitor<String> {
 	  @Override
 	  public String visitUnaryExpr(Expr.Unary expr) {
 	    return parenthesize(expr.operator.lexeme, expr.right);
-	  }
-
-	  @Override
-	  public String visitPolishReverseNotationExpr(PolishReverseNotation expr) {
-		  return parenthesize(expr.operator.lexeme, expr.right);
 	  }
 }
