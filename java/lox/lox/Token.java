@@ -15,6 +15,6 @@ public class Token {
 
 	@Override
 	public String toString() {
-		return String.format("line %d: %s %s &s", line, type, lexeme, literal);
+		return String.format("line %d: %s %s %s", line, type, lexeme, literal);
 	}
 }

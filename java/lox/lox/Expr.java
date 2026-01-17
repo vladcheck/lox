@@ -8,6 +8,7 @@ abstract class Expr {
     R visitGroupingExpr(Grouping expr);
     R visitLiteralExpr(Literal expr);
     R visitUnaryExpr(Unary expr);
+    R visitPolishReverseNotationExpr(PolishReverseNotation expr);
   }
   abstract <R> R accept(Visitor<R> visitor);
 
@@ -28,11 +29,11 @@ abstract class Expr {
   }
 }
   static class Grouping extends Expr {
-    Grouping(Expr expression) {
-      this.expression = expression;
-    }
-
-    final Expr expression;
+	Grouping(Expr expression) {
+	  this.expression = expression;
+	}
+	
+	final Expr expression;
 
   @Override
   <R> R accept(Visitor<R> visitor) {
@@ -63,6 +64,22 @@ abstract class Expr {
   @Override
   <R> R accept(Visitor<R> visitor) {
       return visitor.visitUnaryExpr(this);
+  }
+}
+  static class PolishReverseNotation extends Expr {
+    PolishReverseNotation(Expr left, Expr right, Token operator) {
+      this.left = left;
+      this.right = right;
+      this.operator = operator;
+    }
+
+    final Expr left;
+    final Expr right;
+    final Token operator;
+
+  @Override
+  <R> R accept(Visitor<R> visitor) {
+      return visitor.visitPolishReverseNotationExpr(this);
   }
 }
 }

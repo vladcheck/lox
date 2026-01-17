@@ -6,7 +6,7 @@ public enum TokenType {
 
 	// One (?) or two character tokens
 	BANG, BANG_EQUAL, EQUAL, EQUAL_EQUAL, GREATER, GREATER_EQUAL, LESS, LESS_EQUAL,
-
+	
 	// Literals
 	IDENTIFIER, STRING, NUMBER,
 
@@ -15,5 +15,5 @@ public enum TokenType {
 	WHILE,
 
 	// Others
-	EOF
+	EOF, QUESTION_MARK, COLON
 }
