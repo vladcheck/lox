@@ -1,5 +1,7 @@
 package lox;
 
+import lox.Expr.Assign;
+import lox.Expr.Logical;
 import lox.Expr.Variable;
 
 class AstPrinter implements Expr.Visitor<String> {
@@ -20,12 +22,12 @@ class AstPrinter implements Expr.Visitor<String> {
 		builder.append(")");
 
 		return builder.toString();
+	
 	}
 
 	@Override
 	public String visitBinaryExpr(Expr.Binary expr) {
-		return parenthesize(expr.operator.lexeme,
-				expr.left, expr.right);
+		return parenthesize(expr.operator.lexeme, expr.left, expr.right);
 	}
 
 	@Override
@@ -47,7 +49,16 @@ class AstPrinter implements Expr.Visitor<String> {
 
 	@Override
 	public String visitVariableExpr(Variable expr) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'visitVariableExpr'");
+		return expr.toString();
+	}
+
+	@Override
+	public String visitAssignExpr(Assign expr) {
+		return parenthesize("=", expr);
+	}
+
+	@Override
+	public String visitLogicalExpr(Logical expr) {
+		return parenthesize(expr.operator.lexeme, expr.left, expr.right);
 	}
 }

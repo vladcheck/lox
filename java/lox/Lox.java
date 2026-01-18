@@ -63,21 +63,21 @@ public class Lox {
 		// System.out.println(new AstPrinter().print(expression));
 	}
 
-	private static void report(int line, String where, String message) {
-		System.out.println("[line " + line + "] Error" + where + ": " + message);
+	private static void report(int line, String kind, String where, String message) {
+		System.out.println("[line " + line + "] "+ kind + where + ": " + message);
 		hadError = true;
 	}
 
-	static void error(Token token, String message) {
+	static void error(Token token, String kind, String message) {
 		if (token.type == TokenType.EOF) {
-			report(token.line, " at end", message);
+			report(token.line, kind, " at end", message);
 		} else {
-			report(token.line, " at '" + token.lexeme + "'", message);
+			report(token.line, kind, " at '" + token.lexeme + "'", message);
 		}
 	}
 
-	public static void error(int line, String message) {
-		Lox.report(line, "", message);
+	public static void error(int line, String kind, String message) {
+		Lox.report(line, kind, "", message);
 	}
 
 	public static void runtimeError(RuntimeError error) {

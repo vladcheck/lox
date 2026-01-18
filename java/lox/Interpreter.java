@@ -18,6 +18,30 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 	}
 
 	@Override
+	public Void visitWhileStmt(Stmt.While stmt) {
+		while (isTruthy(evaluate(stmt.condition))) {
+			execute(stmt.body);
+		}
+		return null; 
+	}
+	
+	@Override
+	public Void visitIfStmt(Stmt.If stmt) {
+		if (isTruthy(evaluate(stmt.condition))) {
+			execute(stmt.thenBranch);
+		} else if (stmt.elseBranch != null) {
+			execute(stmt.elseBranch);
+		}
+		return null;
+	}
+
+	@Override
+	public Void visitBlockStmt(Stmt.Block stmt) {
+		executeBlock(stmt.statements, new Environment(environment));
+		return null;
+	}
+
+	@Override
 	public Object visitAssignExpr(Expr.Assign expr) {
 		Object value = evaluate(expr.value);
 		environment.assign(expr.name, value);
@@ -41,77 +65,96 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 	}
 
 	@Override
-	public Object visitBinaryExpr(Expr.Binary expr) { // <-- ИЗМЕНЕНО
+	public Object visitBinaryExpr(Expr.Binary expr) {
 		// left to right order
 		Object left = evaluate(expr.left);
 		Object right = evaluate(expr.right);
 
 		switch (expr.operator.type) {
-			case MINUS:
-				checkNumberOperands(expr.operator, left, right);
-				return (double) left - (double) right;
-			case PLUS:
-				if (left instanceof Double && right instanceof Double) {
-					return (double) left + (double) right;
-				}
-				if (left instanceof String || right instanceof String) {
-					return stringify(left) + stringify(right);
-				}
-				throw new RuntimeError(
-						expr.operator,
-						"Operands must be two numbers, two strings, or number and a string.");
-			case SLASH:
-				checkNumberOperands(expr.operator, left, right);
-				if ((double) right == 0)
-					throw new RuntimeError(
-							expr.operator,
-							"Division by zero.");
-				return (double) left / (double) right;
-			case STAR:
-				checkNumberOperands(expr.operator, left, right);
-				return (double) left * (double) right;
-			case LESS_EQUAL:
-				checkNumberOperands(expr.operator, left, right);
-				return (double) left <= (double) right;
-			case GREATER_EQUAL:
-				checkNumberOperands(expr.operator, left, right);
-				return (double) left >= (double) right;
-			case LESS:
-				checkNumberOperands(expr.operator, left, right);
-				return (double) left < (double) right;
-			case GREATER:
-				checkNumberOperands(expr.operator, left, right);
-				return (double) left > (double) right;
-			case EQUAL_EQUAL:
-				return isEqual(left, right);
-			case BANG_EQUAL:
-				return !isEqual(left, right);
+		case MINUS:
+			checkNumberOperands(expr.operator, left, right);
+			return (double) left - (double) right;
+		case PLUS:
+			if (left instanceof Double && right instanceof Double) {
+				return (double) left + (double) right;
+			}
+			if (left instanceof String || right instanceof String) {
+				return stringify(left) + stringify(right);
+			}
+			throw new RuntimeError(expr.operator, "Operands must be two numbers, two strings, or number and a string.");
+		case SLASH:
+			checkNumberOperands(expr.operator, left, right);
+			if ((double) right == 0)
+				throw new RuntimeError(expr.operator, "Division by zero.");
+			return (double) left / (double) right;
+		case STAR:
+			checkNumberOperands(expr.operator, left, right);
+			return (double) left * (double) right;
+		case LESS_EQUAL:
+			checkNumberOperands(expr.operator, left, right);
+			return (double) left <= (double) right;
+		case GREATER_EQUAL:
+			checkNumberOperands(expr.operator, left, right);
+			return (double) left >= (double) right;
+		case LESS:
+			checkNumberOperands(expr.operator, left, right);
+			return (double) left < (double) right;
+		case GREATER:
+			checkNumberOperands(expr.operator, left, right);
+			return (double) left > (double) right;
+		case EQUAL_EQUAL:
+			return isEqual(left, right);
+		case BANG_EQUAL:
+			return !isEqual(left, right);
 		}
 
 		// Unreachable.
 		return null;
 	}
+	
+	@Override
+	public Object visitLogicalExpr(Expr.Logical expr) {
+		Object left = evaluate(expr.left);
+
+		if (expr.operator.type == TokenType.OR) {
+			if (isTruthy(left))
+				return left;
+		} else if (expr.operator.type == TokenType.XOR) {
+			Object right = evaluate(expr.left);
+
+			if (isTruthy(left) && !isTruthy(right))
+				return left;
+			else if (!isTruthy(left) && isTruthy(right))
+				return right;
+			return false;
+		} else {
+			if (!isTruthy(left))
+				return left;
+		}
+
+		return evaluate(expr.right);
+	}
 
 	@Override
-	public Object visitGroupingExpr(Expr.Grouping expr) { // <-- ИЗМЕНЕНО
+	public Object visitGroupingExpr(Expr.Grouping expr) {
 		return evaluate(expr.expression);
 	}
 
 	@Override
-	public Object visitLiteralExpr(Expr.Literal expr) { // <-- ИЗМЕНЕНО
+	public Object visitLiteralExpr(Expr.Literal expr) {
 		return expr.value;
 	}
 
 	@Override
-	public Object visitUnaryExpr(Expr.Unary expr) { // <-- ИЗМЕНЕНО
+	public Object visitUnaryExpr(Expr.Unary expr) {
 		Object right = evaluate(expr.right);
 
 		switch (expr.operator.type) {
-			case MINUS:
-				checkNumberOperand(expr.operator, right);
-				return -(double) right;
-			case BANG:
-				return !isTruthy(right);
+		case MINUS:
+			checkNumberOperand(expr.operator, right);
+			return -(double) right;
+		case BANG:
+			return !isTruthy(right);
 		}
 
 		// Unreachable.
@@ -119,13 +162,13 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 	}
 
 	@Override
-	public Void visitExpressionStmt(Stmt.Expression stmt) { // <-- ИЗМЕНЕНО
+	public Void visitExpressionStmt(Stmt.Expression stmt) {
 		evaluate(stmt.expression);
 		return null;
 	}
 
 	@Override
-	public Void visitPrintStmt(Stmt.Print stmt) { // <-- ИЗМЕНЕНО
+	public Void visitPrintStmt(Stmt.Print stmt) {
 		Object value = evaluate(stmt.expression);
 		System.out.println(stringify(value));
 		return null;
@@ -133,6 +176,19 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
 	private Object evaluate(Expr expr) {
 		return expr.accept(this);
+	}
+
+	void executeBlock(List<Stmt> statements, Environment environment) {
+		Environment previous = this.environment;
+		try {
+			this.environment = environment;
+
+			for (Stmt statement : statements) {
+				execute(statement);
+			}
+		} finally {
+			this.environment = previous; // bubble up
+		}
 	}
 
 	private void execute(Stmt stmt) {

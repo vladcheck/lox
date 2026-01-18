@@ -1,6 +1,7 @@
 package lox;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import static lox.TokenType.*;
 
@@ -52,9 +53,79 @@ public class Parser {
 	}
 
 	private Stmt statement() {
+		if (match(IF))
+			return ifStatement();
 		if (match(PRINT))
 			return printStatement();
+		if (match(WHILE))
+			return whileStatement();
+		if (match(LEFT_BRACE))
+			return new Stmt.Block(block());
 		return expressionStatement();
+	}
+
+	// does disugaring to 'while loop'
+	private Stmt forStatement() {
+		consume(LEFT_PAREN, "Expect '(' after 'for'.");
+
+		Stmt initializer;
+		if (match(SEMICOLON)) {
+			initializer = null;
+		} else if (match(VAR)) {
+			initializer = varDeclaration();
+		} else {
+			initializer = expressionStatement();
+		}
+
+		Expr condition = null;
+		if (!check(SEMICOLON)) {
+			condition = expression();
+		}
+		consume(SEMICOLON, "Expect ';' after for loop condition.");
+
+		Expr increment = null;
+		if (!check(RIGHT_PAREN)) {
+			increment = expression();
+		}
+		consume(RIGHT_PAREN, "Expect ')' after for clauses.");
+
+		Stmt body = statement();
+
+		if (increment != null) {
+			body = new Stmt.Block(Arrays.asList(body, new Stmt.Expression(increment)));
+		}
+		
+		if (condition == null) condition = new Expr.Literal(true);
+		
+		body = new Stmt.While(condition, body);
+		
+		if (initializer != null) {
+			body = new Stmt.Block(Arrays.asList(initializer, body));
+		}
+
+		return body;
+	}
+
+	private Stmt whileStatement() {
+		consume(LEFT_PAREN, "Expect '(' after 'while'.");
+		Expr condition = expression();
+		consume(RIGHT_PAREN, "Expect ') after condition in 'while' clause.");
+		Stmt body = statement();
+		return new Stmt.While(condition, body);
+	}
+
+	private Stmt ifStatement() {
+		consume(LEFT_PAREN, "Expect '(' after 'if'.");
+		Expr condition = expression();
+		consume(RIGHT_PAREN, "Expect ')' after condition in 'if' clause.");
+
+		Stmt thenBranch = statement();
+		Stmt elseBranch = null;
+		if (match(ELSE)) {
+			elseBranch = statement();
+		}
+
+		return new Stmt.If(condition, thenBranch, elseBranch);
 	}
 
 	private Stmt printStatement() {
@@ -69,8 +140,19 @@ public class Parser {
 		return new Stmt.Expression(expr);
 	}
 
+	private List<Stmt> block() {
+		List<Stmt> statements = new ArrayList<>();
+
+		while (!check(RIGHT_BRACE) && !isAtEnd()) {
+			statements.add(declaration());
+		}
+
+		consume(RIGHT_BRACE, "Expect '}' after block.");
+		return statements;
+	}
+
 	private Expr assignment() {
-		Expr expr = equality();
+		Expr expr = or();
 
 		if (match(EQUAL)) {
 			Token equals = previous();
@@ -82,6 +164,42 @@ public class Parser {
 			}
 
 			error(equals, "Invalid assignment target.");
+		}
+
+		return expr;
+	}
+
+	private Expr or() {
+		Expr expr = xor();
+
+		while (match(OR)) {
+			Token operator = previous();
+			Expr right = xor();
+			expr = new Expr.Logical(expr, operator, right);
+		}
+
+		return expr;
+	}
+
+	private Expr xor() {
+		Expr expr = and();
+
+		while (match(XOR)) {
+			Token operator = previous();
+			Expr right = and();
+			expr = new Expr.Logical(expr, operator, right);
+		}
+
+		return expr;
+	}
+
+	private Expr and() {
+		Expr expr = equality();
+
+		while (match(AND)) {
+			Token operator = previous();
+			Expr right = equality();
+			expr = new Expr.Logical(expr, operator, right);
 		}
 
 		return expr;
@@ -172,7 +290,7 @@ public class Parser {
 			consume(RIGHT_PAREN, "Expect ')' after expression.");
 			return new Expr.Grouping(expr);
 		}
-		throw error(peek(), "Expect expression.");
+		throw error(peek(), "Expected expression, found '%s'".formatted(peek().lexeme));
 	}
 
 	private Token consume(TokenType type, String message) throws ParseError {
@@ -218,7 +336,7 @@ public class Parser {
 	}
 
 	private ParseError error(Token token, String message) {
-		Lox.error(token, message);
+		Lox.error(token, "ParserError", message);
 		return new ParseError();
 	}
 
@@ -231,15 +349,15 @@ public class Parser {
 				return;
 
 			switch (peek().type) {
-				case CLASS:
-				case FUN:
-				case VAR:
-				case FOR:
-				case IF:
-				case WHILE:
-				case PRINT:
-				case RETURN:
-					return;
+			case CLASS:
+			case FUN:
+			case VAR:
+			case FOR:
+			case IF:
+			case WHILE:
+			case PRINT:
+			case RETURN:
+				return;
 			}
 			advance();
 		}
