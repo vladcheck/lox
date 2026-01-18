@@ -9,6 +9,7 @@ typedef enum
     OP_RETURN,
     OP_CONSTANT,
     OP_CONSTANT_LONG,
+    OP_NEGATE,
 } OpCode;
 
 // Chunk acts like a dynamic array

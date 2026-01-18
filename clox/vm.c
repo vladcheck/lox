@@ -54,6 +54,11 @@ InterpretResult run(VM *vm)
             push(vm, constant);
             break;
         }
+        case OP_NEGATE:
+        {
+            push(vm, -pop(vm));
+            break;
+        }
         case OP_RETURN:
         {
             printValue(pop(vm));
