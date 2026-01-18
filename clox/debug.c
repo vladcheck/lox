@@ -31,6 +31,15 @@ static int constantInstruction(const char *name, Chunk *chunk, int offset)
 int disassembleInstruction(Chunk *chunk, int offset)
 {
     printf("%04d ", offset);
+    if (offset > 0 && chunk->lines[offset] == chunk->lines[offset - 1])
+    {
+        // instruction comes from new source line, just put a delimeter
+        printf("\t| ");
+    }
+    else
+    {
+        printf("%4d ", chunk->lines[offset]);
+    }
 
     uint8_t instruction = chunk->code[offset];
     switch (instruction)
@@ -39,6 +48,8 @@ int disassembleInstruction(Chunk *chunk, int offset)
         return simpleInstruction("OP_RETURN", offset);
     case OP_CONSTANT:
         return constantInstruction("OP_CONSTANT", chunk, offset);
+    case OP_CONSTANT_LONG:
+        return constantInstruction("OP_CONSTANT_LONG", chunk, offset);
     default:
         printf("Unknown opcode %d\n", instruction);
         return offset + 1;
