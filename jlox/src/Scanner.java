@@ -1,10 +1,11 @@
-package lox;
+package src;
+
+import static src.TokenType.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import static lox.TokenType.*;
 
 public class Scanner {
 	private final List<Token> tokens = new ArrayList<>();
@@ -101,7 +102,7 @@ public class Scanner {
 		}
 
 		if (isAtEnd()) {
-			Lox.error(line, "ScannerError", "Unterminated string.");
+			Lox.error(line, "Unterminated string.");
 			return;
 		}
 
@@ -206,7 +207,7 @@ public class Scanner {
 				} else if (isAlpha(c)) {
 					identifier();
 				} else {
-					Lox.error(line, "ScannerError", "Unexpected character.");
+					Lox.error(line, "Unexpected character.");
 				}
 			}
 		}

@@ -1,4 +1,4 @@
-package lox;
+package src;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -54,30 +54,27 @@ public class Lox {
 		List<Token> tokens = scanner.scanTokens();
 
 		Parser parser = new Parser(tokens);
-		List<Stmt> statements = parser.parse();
+		Expr expression = parser.parse();
 
-		if (hadError)
-			return;
-
-		interpreter.interpret(statements);
+		interpreter.interpret(expression);
 		// System.out.println(new AstPrinter().print(expression));
 	}
 
-	private static void report(int line, String kind, String where, String message) {
-		System.out.println("[line " + line + "] "+ kind + where + ": " + message);
+	private static void report(int line, String where, String message) {
+		System.out.println("[line " + line + "] Error" + where + ": " + message);
 		hadError = true;
 	}
 
-	static void error(Token token, String kind, String message) {
+	static void error(Token token, String message) {
 		if (token.type == TokenType.EOF) {
-			report(token.line, kind, " at end", message);
+			report(token.line, " at end", message);
 		} else {
-			report(token.line, kind, " at '" + token.lexeme + "'", message);
+			report(token.line, " at '" + token.lexeme + "'", message);
 		}
 	}
 
-	public static void error(int line, String kind, String message) {
-		Lox.report(line, kind, "", message);
+	public static void error(int line, String message) {
+		Lox.report(line, "", message);
 	}
 
 	public static void runtimeError(RuntimeError error) {

@@ -2,3 +2,4 @@
 .cursor
 bin
 .DS_Store
+__python__

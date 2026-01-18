@@ -1,5 +1,6 @@
-package lox;
+package src;
 
+@SuppressWarnings("serial")
 public class RuntimeError extends RuntimeException {
 	final Token token;
 
