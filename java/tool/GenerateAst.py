@@ -5,6 +5,7 @@ Python script to generate Java AST classes.
 import os
 from typing import List
 
+PACKAGE: str = "lox"
 
 def define_type(writer, base_name: str, class_name: str, field_list: str):
     """
@@ -57,7 +58,7 @@ def define_ast(output_dir: str, base_name: str, types: List[str]) -> None:
     path = os.path.join(output_dir, f"{base_name}.java")
     with open(path, "w", encoding="utf-8") as writer:
         # Write module header
-        writer.write("package lox;\n\n")
+        writer.write(f"package {PACKAGE};\n\n")
         writer.write("import java.util.List;\n\n")
 
         # Base class definition
@@ -77,7 +78,7 @@ def define_ast(output_dir: str, base_name: str, types: List[str]) -> None:
         writer.write("}")
 
 
-def main():
+def main() -> None:
     """
     Main function to generate the Java AST file.
     """
@@ -86,13 +87,19 @@ def main():
     os.makedirs(output_dir, exist_ok=True)
 
     # Define AST types (same as in the original Java code)
-    expr_types = [
+    expr_types: List[str] = [
+		"Assign   : Token name, Expr value",
         "Binary   : Expr left, Token operator, Expr right",
         "Grouping : Expr expression",
         "Literal  : Object value",
         "Unary    : Token operator, Expr right",
+        "Variable : Token name"
     ]
-    stmt_types = ["Expression : Expr expression", "Print      : Expr expression"]
+    stmt_types: List[str] = [
+        "Expression : Expr expression",
+        "Print      : Expr expression",
+        "Var        : Token name, Expr initializer"
+    ]
 
     define_ast(output_dir, "Expr", expr_types)
     define_ast(output_dir, "Stmt", stmt_types)

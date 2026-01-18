@@ -1,0 +1,12 @@
+var a = 3;
+var b = 2;
+var wait;
+
+print "CALCULATOR";
+print "3 + 2 -> " + (a + b);
+print "3 - 2 -> " + (a - b);
+print "3 * 2 -> " + (a * b);
+print "3 / 2 -> " + (a / b);
+print "3 == 2 -> " + (a == b);
+print "3 != 2 -> " + (a != b);
+print wait;

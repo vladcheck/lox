@@ -1,3 +1,4 @@
-*.class
+.vscode
+.cursor
+bin
 .DS_Store
-bin/

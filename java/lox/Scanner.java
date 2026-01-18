@@ -1,52 +1,10 @@
 package lox;
 
-import static lox.TokenType.AND;
-import static lox.TokenType.BANG;
-import static lox.TokenType.BANG_EQUAL;
-import static lox.TokenType.CLASS;
-import static lox.TokenType.COMMA;
-import static lox.TokenType.DOT;
-import static lox.TokenType.ELSE;
-import static lox.TokenType.EOF;
-import static lox.TokenType.EQUAL;
-import static lox.TokenType.EQUAL_EQUAL;
-import static lox.TokenType.EXIT;
-import static lox.TokenType.FALSE;
-import static lox.TokenType.FOR;
-import static lox.TokenType.FUN;
-import static lox.TokenType.GREATER;
-import static lox.TokenType.GREATER_EQUAL;
-import static lox.TokenType.IDENTIFIER;
-import static lox.TokenType.IF;
-import static lox.TokenType.INSTANCE_OF;
-import static lox.TokenType.LEFT_BRACE;
-import static lox.TokenType.LEFT_PAREN;
-import static lox.TokenType.LESS;
-import static lox.TokenType.LESS_EQUAL;
-import static lox.TokenType.MINUS;
-import static lox.TokenType.NIL;
-import static lox.TokenType.NUMBER;
-import static lox.TokenType.OR;
-import static lox.TokenType.PLUS;
-import static lox.TokenType.PRINT;
-import static lox.TokenType.RETURN;
-import static lox.TokenType.RIGHT_BRACE;
-import static lox.TokenType.RIGHT_PAREN;
-import static lox.TokenType.SEMICOLON;
-import static lox.TokenType.SLASH;
-import static lox.TokenType.STAR;
-import static lox.TokenType.STRING;
-import static lox.TokenType.SUPER;
-import static lox.TokenType.THIS;
-import static lox.TokenType.TRUE;
-import static lox.TokenType.VAR;
-import static lox.TokenType.WHILE;
-import static lox.TokenType.XOR;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import static lox.TokenType.*;
 
 public class Scanner {
 	private final List<Token> tokens = new ArrayList<>();
@@ -211,46 +169,46 @@ public class Scanner {
 	private void scanToken() {
 		char c = advance();
 		switch (c) {
-		case '/' -> {
-			if (match('/')) {
-				lineComment();
-			} else if (match('*')) {
-				multilineComment();
-			} else {
-				addToken(SLASH);
+			case '/' -> {
+				if (match('/')) {
+					lineComment();
+				} else if (match('*')) {
+					multilineComment();
+				} else {
+					addToken(SLASH);
+				}
 			}
-		}
-		case '(' -> addToken(LEFT_PAREN);
-		case ')' -> addToken(RIGHT_PAREN);
-		case '{' -> addToken(LEFT_BRACE);
-		case '}' -> addToken(RIGHT_BRACE);
-		case ',' -> addToken(COMMA);
-		case '.' -> addToken(DOT);
-		case '-' -> addToken(MINUS);
-		case '+' -> addToken(PLUS);
-		case ';' -> addToken(SEMICOLON);
-		case '*' -> addToken(STAR);
-		case '!' -> addToken(match('=') ? BANG_EQUAL : BANG);
-		case '=' -> addToken(match('=') ? EQUAL_EQUAL : EQUAL);
-		case '<' -> addToken(match('=') ? LESS_EQUAL : LESS);
-		case '>' -> addToken(match('=') ? GREATER_EQUAL : GREATER);
-		case ' ' -> {
-		}
-		case '\r' -> {
-		}
-		case '\t' -> {
-		}
-		case '\n' -> line++;
-		case '"' -> string();
-		default -> {
-			if (isDigit(c)) {
-				number();
-			} else if (isAlpha(c)) {
-				identifier();
-			} else {
-				Lox.error(line, "Unexpected character.");
+			case '(' -> addToken(LEFT_PAREN);
+			case ')' -> addToken(RIGHT_PAREN);
+			case '{' -> addToken(LEFT_BRACE);
+			case '}' -> addToken(RIGHT_BRACE);
+			case ',' -> addToken(COMMA);
+			case '.' -> addToken(DOT);
+			case '-' -> addToken(MINUS);
+			case '+' -> addToken(PLUS);
+			case ';' -> addToken(SEMICOLON);
+			case '*' -> addToken(STAR);
+			case '!' -> addToken(match('=') ? BANG_EQUAL : BANG);
+			case '=' -> addToken(match('=') ? EQUAL_EQUAL : EQUAL);
+			case '<' -> addToken(match('=') ? LESS_EQUAL : LESS);
+			case '>' -> addToken(match('=') ? GREATER_EQUAL : GREATER);
+			case ' ' -> {
 			}
-		}
+			case '\r' -> {
+			}
+			case '\t' -> {
+			}
+			case '\n' -> line++;
+			case '"' -> string();
+			default -> {
+				if (isDigit(c)) {
+					number();
+				} else if (isAlpha(c)) {
+					identifier();
+				} else {
+					Lox.error(line, "Unexpected character.");
+				}
+			}
 		}
 	}
 }
