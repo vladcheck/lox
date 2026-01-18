@@ -2,12 +2,19 @@
 #include <stdlib.h>
 
 #include "common.h"
+#include "debug.h"
 #include "vm.h"
+
+static void resetStack(VM *vm)
+{
+    vm->stackTop = vm->stack;
+}
 
 void initVM(VM *vm)
 {
     vm->chunk = NULL;
     vm->ip = NULL;
+    resetStack(vm);
 }
 
 void freeVM(VM *vm)
@@ -21,25 +28,36 @@ InterpretResult run(VM *vm)
 
     for (;;)
     {
+#ifdef DEBUG_TRACE_EXECUTION
+        printf("\t");
+        for (Value *slot = vm->stack; slot < vm->stackTop; slot++)
+        {
+            printf("[ ");
+            printValue(*slot);
+            printf(" ]");
+        }
+        disassembleInstruction(vm->chunk, (int)(vm->ip - vm->chunk->code));
+#endif
+
         uint8_t instruction;
         switch (instruction = READ_BYTE())
         {
         case OP_CONSTANT:
         {
             Value constant = READ_CONSTANT();
-            printValue(constant);
-            printf("\n");
+            push(vm, constant);
             break;
         }
         case OP_CONSTANT_LONG:
         {
             Value constant = READ_CONSTANT();
-            printValue(constant);
-            printf("\n");
+            push(vm, constant);
             break;
         }
         case OP_RETURN:
         {
+            printValue(pop(vm));
+            printf("\n");
             return INTERPRET_OK;
         }
         }
@@ -54,4 +72,16 @@ InterpretResult interpret(VM *vm, Chunk *chunk)
     vm->chunk = chunk;
     vm->ip = vm->chunk->code;
     return run(vm);
+}
+
+void push(VM *vm, Value value)
+{
+    *vm->stackTop = value;
+    vm->stackTop++;
+}
+
+Value pop(VM *vm)
+{
+    vm->stackTop--;
+    return *vm->stackTop;
 }

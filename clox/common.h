@@ -5,4 +5,6 @@
 #include <stddef.h>  // NULL type
 #include <stdint.h>  // fixed-sized int types
 
+#define DEBUG_TRACE_EXECUTION // VM prints each instruction before execution
+
 #endif
