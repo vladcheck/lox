@@ -73,7 +73,7 @@ bool valuesEqual(Value a, Value b)
     case VAL_NIL:
         return true;
     case VAL_OBJ:
-        return stringsEqual(AS_STRING(a), AS_STRING(b));
+        return AS_OBJ(a) == AS_OBJ(b);
     default:
         return false; // unreachable
     }

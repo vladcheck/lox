@@ -9,6 +9,7 @@
 #include "memory.h"
 #include "vm.h"
 #include "compiler.h"
+#include "table.h"
 
 static void resetStack(VM *vm)
 {
@@ -34,11 +35,13 @@ void initVM(VM *vm)
     vm->chunk = NULL;
     vm->ip = NULL;
     vm->objects = NULL;
+    initTable(&vm->strings);
     resetStack(vm);
 }
 
 void freeVM(VM *vm)
 {
+    freeTable(&vm->strings);
     freeObjects(vm);
 }
 

@@ -3,6 +3,7 @@
 
 #include "memory.h"
 #include "object.h"
+#include "table.h"
 #include "value.h"
 #include "vm.h"
 
@@ -27,6 +28,7 @@ static ObjString *allocateString(VM *vm, char *chars, int length, uint32_t hash)
     string->length = length;
     string->chars = chars;
     string->hash = hash;
+    tableSet(&vm->strings, string, NIL_VAL); // string intern
     return string;
 }
 
@@ -46,13 +48,24 @@ static uint32_t hashString(const char *key, int length)
 // @return Pointer to `ObjString`'s first character
 ObjString *takeString(VM *vm, char *chars, int length, uint32_t hash)
 {
+    ObjString *interned = tableFindString(&vm->strings, chars, length, hash);
+    if (interned != NULL)
+    {
+        FREE_ARRAY(char, chars, length + 1);
+        return interned;
+    }
     return allocateString(vm, chars, length, hash);
 }
 
-// Copies `ObjString` to heap
+// Copies `ObjString` to heap if it was not interned. Returns pointer to interned string otherwise
 ObjString *copyString(VM *vm, const char *chars, int length)
 {
     uint32_t hash = hashString(chars, length);
+    ObjString *interned = tableFindString(&vm->strings, chars, length, hash);
+
+    if (interned != NULL)
+        return interned;
+
     char *heapChars = ALLOCATE(char, length + 1);       // get free space
     memcpy(heapChars, chars, length);                   // copy characters from current array to new space
     heapChars[length] = '\0';                           // add null character at the end
