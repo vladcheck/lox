@@ -1,38 +1,112 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "common.h"
-#include "chunk.h"
-#include "debug.h"
 #include "vm.h"
+
+static void repl(VM *vm)
+{
+    char line[1024];
+    for (;;)
+    {
+        printf("> ");
+
+        if (!fgets(line, sizeof(line), stdin))
+        {
+            printf("\n");
+            break;
+        }
+
+        interpret(vm, line);
+    }
+}
+
+static FILE *openFile(const char *path)
+{
+    FILE *file = fopen(path, "rb");
+    if (file == NULL)
+    {
+        fprintf(stderr, "Could not open file \"%s\".\n", path);
+        exit(74);
+    }
+    return file;
+}
+
+static size_t getFileSize(FILE *file)
+{
+    fseek(file, 0L, SEEK_END);
+    size_t fileSize = ftell(file);
+    rewind(file);
+    return fileSize;
+}
+
+static char *getFileBuffer(FILE *file, const char *path)
+{
+    size_t fileSize = getFileSize(file);
+    char *buffer = (char *)malloc(fileSize + 1);
+    if (buffer == NULL)
+    {
+        fprintf(stderr, "Not enough memory to read \"%s\".\n", path);
+        exit(74);
+    }
+    return buffer;
+}
+
+static size_t readWholeBuffer(char *buffer, size_t typeSize, FILE *file, const char *path)
+{
+    size_t fileSize = getFileSize(file);
+    size_t bytesRead = fread(buffer, typeSize, fileSize, file);
+    if (bytesRead < fileSize)
+    {
+        fprintf(stderr, "Could not read file \"%s\".\n", path);
+        exit(74);
+    }
+    return bytesRead;
+}
+
+static char *readFile(const char *path)
+{
+    FILE *file = openFile(path);
+    char *buffer = getFileBuffer(file, path);
+    size_t bytesRead = readWholeBuffer(buffer, sizeof(char), file, path);
+    buffer[bytesRead] = '\0';
+
+    fclose(file);
+    return buffer;
+}
+
+static void runFile(VM *vm, const char *path)
+{
+    char *source = readFile(path);
+    InterpretResult result = interpret(vm, source);
+    free(source);
+
+    if (result == INTERPRET_COMPILE_ERROR)
+        exit(65);
+    if (result == INTERPRET_RUNTIME_ERROR)
+        exit(70);
+}
 
 int main(int argc, const char *argv[])
 {
     VM vm;
     initVM(&vm);
 
-    Chunk chunk;
-    initChunk(&chunk);
+    if (argc == 1)
+    {
+        repl(&vm);
+    }
+    else if (argc == 2)
+    {
+        runFile(&vm, argv[1]);
+    }
+    else
+    {
+        fprintf(stderr, "Usage: clox [path]\n");
+        exit(64);
+    }
 
-    int constant = addConstant(&chunk, 1.2);
-    writeChunk(&chunk, OP_CONSTANT, 123);
-    writeChunk(&chunk, constant, 123);
-
-    constant = addConstant(&chunk, 3.4);
-    writeChunk(&chunk, OP_CONSTANT, 123);
-    writeChunk(&chunk, constant, 123);
-
-    writeChunk(&chunk, OP_ADD, 123);
-
-    constant = addConstant(&chunk, 5.6);
-    writeChunk(&chunk, OP_CONSTANT, 123);
-    writeChunk(&chunk, constant, 123);
-
-    writeChunk(&chunk, OP_DIVIDE, 123);
-    writeChunk(&chunk, OP_NEGATE, 123);
-
-    writeChunk(&chunk, OP_RETURN, 123);
-
-    disassembleChunk(&chunk, "test chunk");
-    interpret(&vm, &chunk);
     freeVM(&vm);
-    freeChunk(&chunk);
     return 0;
 }

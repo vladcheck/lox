@@ -3,6 +3,7 @@
 
 #include "chunk.h"
 #include "value.h"
+#include "scanner.h"
 
 #define STACK_MAX 256 // Self-proclaimed
 
@@ -23,7 +24,7 @@ typedef enum
 
 void initVM(VM *vm);
 void freeVM(VM *vm);
-InterpretResult interpret(VM *vm, Chunk *chunk);
+InterpretResult interpret(VM *vm, const char *source);
 void push(VM *vm, Value value);
 Value pop(VM *vm);
 
