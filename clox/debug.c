@@ -32,14 +32,9 @@ int disassembleInstruction(Chunk *chunk, int offset)
 {
     printf("%04d ", offset);
     if (offset > 0 && chunk->lines[offset] == chunk->lines[offset - 1])
-    {
-        // instruction comes from new source line, just put a delimeter
-        printf("\t| ");
-    }
+        printf("\t| "); // instruction comes from new source line, just put a delimeter
     else
-    {
-        printf("%4d ", chunk->lines[offset]);
-    }
+        printf("%4d ", chunk->lines[offset]); // otherwise put line number first
 
     uint8_t instruction = chunk->code[offset];
     switch (instruction)
@@ -68,6 +63,14 @@ int disassembleInstruction(Chunk *chunk, int offset)
         return simpleInstruction("OP_DIVIDE", offset);
     case OP_NOT:
         return simpleInstruction("OP_NOT", offset);
+    case OP_EQUAL:
+        return simpleInstruction("OP_EQUAL", offset);
+    case OP_GREATER:
+        return simpleInstruction("OP_GREATER", offset);
+    case OP_LESS:
+        return simpleInstruction("OP_LESS", offset);
+    case OP_DIAMOND:
+        return simpleInstruction("OP_DIAMOND", offset);
     default:
         printf("Unknown opcode %d\n", instruction);
         return offset + 1;

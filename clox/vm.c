@@ -47,6 +47,21 @@ static bool isFalsey(Value value)
     return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
 }
 
+static int diamond(VM *vm, Value a, Value b)
+{
+    if (!IS_NUMBER(a) || !IS_NUMBER(b))
+    {
+        runtimeError(vm, "Operands must be numbers.");
+        return 0; // unreachable
+    }
+    if (AS_NUMBER(a) < AS_NUMBER(b))
+        return -1;
+    else if (AS_NUMBER(a) == AS_NUMBER(b))
+        return 0;
+    else
+        return 1;
+}
+
 InterpretResult run(VM *vm)
 {
 #define READ_BYTE() (*vm->ip++)
@@ -78,6 +93,30 @@ InterpretResult run(VM *vm)
     uint8_t instruction;
     switch (instruction = READ_BYTE())
     {
+    case OP_DIAMOND:
+    {
+        Value b = pop(vm);
+        Value a = pop(vm);
+        push(vm, NUMBER_VAL(diamond(vm, a, b)));
+        break;
+    }
+    case OP_EQUAL:
+    {
+        Value b = pop(vm);
+        Value a = pop(vm);
+        push(vm, BOOL_VAL(valuesEqual(a, b)));
+        break;
+    }
+    case OP_GREATER:
+    {
+        BINARY_OP(vm, BOOL_VAL, >);
+        break;
+    }
+    case OP_LESS:
+    {
+        BINARY_OP(vm, BOOL_VAL, <);
+        break;
+    }
     case OP_CONSTANT:
     {
         Value constant = READ_CONSTANT();
