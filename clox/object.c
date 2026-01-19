@@ -21,28 +21,42 @@ static Obj *allocateObject(VM *vm, size_t size, ObjType type)
 }
 
 // Returns a `string object` from an array of bytes in heap
-static ObjString *allocateString(VM *vm, char *chars, int length)
+static ObjString *allocateString(VM *vm, char *chars, int length, uint32_t hash)
 {
     ObjString *string = ALLOCATE_OBJ(vm, ObjString, OBJ_STRING);
     string->length = length;
     string->chars = chars;
+    string->hash = hash;
     return string;
+}
+
+// https://github.com/lcn2/fnv
+static uint32_t hashString(const char *key, int length)
+{
+    uint32_t hash = 2166136261u;
+    for (int i = 0; i < length; i++)
+    {
+        hash ^= (uint8_t)key[i]; // xor
+        hash *= 16777619;
+    }
+    return hash;
 }
 
 // Takes ownership of preallocated `ObjString` on heap.
 // @return Pointer to `ObjString`'s first character
-ObjString *takeString(VM *vm, char *chars, int length)
+ObjString *takeString(VM *vm, char *chars, int length, uint32_t hash)
 {
-    return allocateString(vm, chars, length);
+    return allocateString(vm, chars, length, hash);
 }
 
 // Copies `ObjString` to heap
 ObjString *copyString(VM *vm, const char *chars, int length)
 {
-    char *heapChars = ALLOCATE(char, length + 1); // get free space
-    memcpy(heapChars, chars, length);             // copy characters from current array to new space
-    heapChars[length] = '\0';                     // add null character at the end
-    return allocateString(vm, heapChars, length); // get 'string object' representation of allocated memory
+    uint32_t hash = hashString(chars, length);
+    char *heapChars = ALLOCATE(char, length + 1);       // get free space
+    memcpy(heapChars, chars, length);                   // copy characters from current array to new space
+    heapChars[length] = '\0';                           // add null character at the end
+    return allocateString(vm, heapChars, length, hash); // get 'string object' representation of allocated memory
 }
 
 // Prints an `Obj` representation to stdout
