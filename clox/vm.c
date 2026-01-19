@@ -1,9 +1,12 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "common.h"
 #include "debug.h"
+#include "object.h"
+#include "memory.h"
 #include "vm.h"
 #include "compiler.h"
 
@@ -30,11 +33,13 @@ void initVM(VM *vm)
 {
     vm->chunk = NULL;
     vm->ip = NULL;
+    vm->objects = NULL;
     resetStack(vm);
 }
 
 void freeVM(VM *vm)
 {
+    freeObjects(vm);
 }
 
 static Value peek(VM *vm, int distance)
@@ -47,6 +52,22 @@ static bool isFalsey(Value value)
     return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
 }
 
+static void concatenate(VM *vm)
+{
+    ObjString *b = AS_STRING(pop(vm));
+    ObjString *a = AS_STRING(pop(vm));
+
+    int length = a->length + b->length;
+    char *chars = ALLOCATE(char, length + 1);
+    memcpy(chars, a->chars, a->length);
+    memcpy(chars + a->length, b->chars, b->length);
+    chars[length] = '\0';
+
+    ObjString *result = takeString(vm, chars, length);
+    push(vm, OBJ_VAL(result));
+}
+
+// Evaluates diamond `<>` operator on two numeric `Value`s
 static int diamond(VM *vm, Value a, Value b)
 {
     if (!IS_NUMBER(a) || !IS_NUMBER(b))
@@ -158,8 +179,22 @@ InterpretResult run(VM *vm)
         push(vm, BOOL_VAL(isFalsey(pop(vm))));
         break;
     case OP_ADD:
-        BINARY_OP(vm, NUMBER_VAL, +);
+    {
+        if (IS_STRING(peek(vm, 0)) && IS_STRING(peek(vm, 1)))
+            concatenate(vm);
+        else if (IS_NUMBER(peek(vm, 0)) && IS_NUMBER(peek(vm, 1)))
+        {
+            double b = AS_NUMBER(pop(vm));
+            double a = AS_NUMBER(pop(vm));
+            push(vm, NUMBER_VAL(a + b));
+        }
+        else
+        {
+            runtimeError(vm, "Operands must be two numbers or two strings.");
+            return INTERPRET_RUNTIME_ERROR;
+        }
         break;
+    }
     case OP_SUBTRACT:
         BINARY_OP(vm, NUMBER_VAL, -);
         break;
