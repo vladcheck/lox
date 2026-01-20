@@ -164,6 +164,8 @@ static TokenType identifierType()
             }
         }
         break;
+    case 'g':
+        return checkKeyword(1, 3, "oto", TOKEN_GOTO);
     case 'i':
         return checkKeyword(1, 1, "f", TOKEN_IF);
     case 'n':
@@ -198,6 +200,18 @@ static TokenType identifierType()
 
     return TOKEN_IDENTIFIER;
 #endif
+}
+
+static Token symbol()
+{
+    while (isAlpha(peek()) || isDigit(peek()))
+        advance();
+    if (peek() == ':')
+    {
+        advance();
+        return makeToken(TOKEN_GOTO);
+    }
+    return makeToken(identifierType()); // just an identifier
 }
 
 static Token identifier()

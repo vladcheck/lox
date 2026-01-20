@@ -116,6 +116,14 @@ static void emitBytes(uint8_t byte1, uint8_t byte2)
     emitByte(byte2);
 }
 
+static int emitJump(uint8_t instruction)
+{
+    emitByte(instruction);
+    emitByte(0xff);
+    emitByte(0xff);
+    return currentChunk()->count - 2;
+}
+
 void emitReturn()
 {
     emitByte(OP_RETURN);
@@ -141,6 +149,30 @@ static void emitConstant(Value value)
 static void emitConstantLong(Value value)
 {
     emitBytes(OP_CONSTANT_LONG, makeConstant(value));
+}
+
+static void patchJump(int offset)
+{
+    // -2 to adjust for the bytecode for the jump offset itself.
+    int jump = currentChunk()->count - offset - 2;
+
+    if (jump > UINT16_MAX)
+        error("Too much code to jump over.");
+
+    currentChunk()->code[offset] = (jump >> 8) & 0xff;
+    currentChunk()->code[offset + 1] = jump & 0xff;
+}
+
+static void patchJump(int offset)
+{
+    // -2 to adjust for the bytecode for the jump offset itself.
+    int jump = currentChunk()->count - offset - 2;
+
+    if (jump > UINT16_MAX)
+        error("Too much code to jump over.");
+
+    currentChunk()->code[offset] = (jump >> 8) & 0xff;
+    currentChunk()->code[offset + 1] = jump & 0xff;
 }
 
 static void binary(VM *vm, bool canAssign)
@@ -333,6 +365,31 @@ static void declareVariable()
     addLocal(*name);
 }
 
+static int addSymbol(Value symbol)
+{
+    current->symbolCount++;
+    error("Symbols are not yet supported.");
+}
+
+static uint8_t symbolConstant(VM *vm, Token *name)
+{
+    Value value = OBJ_VAL(copyString(vm, name->start, name->length));
+    int symbol = addSymbol(value);
+    if (symbol > UINT8_MAX)
+    {
+        error("Too many Symbols.");
+        return 0;
+    }
+
+    return (uint8_t)symbol;
+}
+
+static uint8_t parseSymbol(VM *vm, const char *errorMessage)
+{
+    consume(TOKEN_GOTO, errorMessage);
+    return symbolConstant(vm, &parser.previous);
+}
+
 static uint8_t parseVariable(VM *vm, const char *errorMessage)
 {
     consume(TOKEN_IDENTIFIER, errorMessage);
@@ -384,6 +441,25 @@ static void expressionStatement(VM *vm)
     emitByte(OP_POP);
 }
 
+static void ifStatement(VM *vm)
+{
+    consume(TOKEN_LEFT_PAREN, "Expect '(' after 'if'.");
+    expression(vm);
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
+
+    int thenJump = emitJump(OP_JUMP_IF_FALSE);
+    emitByte(OP_POP);
+    statement(vm);
+
+    patchJump(thenJump);
+    emitByte(OP_POP);
+
+    int elseJump = emitJump(OP_JUMP);
+    if (match(TOKEN_ELSE))
+        statement(vm);
+    patchJump(elseJump);
+}
+
 static void printStatement(VM *vm)
 {
     expression(vm);
@@ -421,7 +497,6 @@ static void synchronize()
 
 static void statement(VM *vm)
 {
-
     if (match(TOKEN_PRINT))
         printStatement(vm);
     else if (match(TOKEN_LEFT_BRACE))
@@ -430,6 +505,8 @@ static void statement(VM *vm)
         block(vm);
         endScope();
     }
+    else if (match(TOKEN_IF))
+        ifStatement(vm);
     else
         expressionStatement(vm);
 }

@@ -11,6 +11,7 @@ static void initCompiler(Compiler *compiler)
 {
     compiler->localCount = 0;
     compiler->scopeDepth = 0;
+    compiler->symbolCount = 0;
     current = compiler;
 }
 

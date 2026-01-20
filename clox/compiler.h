@@ -12,7 +12,9 @@ typedef struct
 typedef struct
 {
     Local locals[UINT8_COUNT];
+    Local symbols[UINT8_COUNT];
     int localCount;
+    int symbolCount;
     int scopeDepth;
 } Compiler;
 

@@ -54,6 +54,8 @@ typedef enum
     TOKEN_VAR,
     TOKEN_WHILE,
     TOKEN_XOR,
+    TOKEN_GOTO,
+    TOKEN_SYMBOL,
 
     TOKEN_ERROR,
     TOKEN_EOF

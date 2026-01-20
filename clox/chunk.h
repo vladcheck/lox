@@ -33,6 +33,10 @@ typedef enum
     OP_SET_GLOBAL,    // sets a new value to a global variable
     OP_GET_LOCAL,     // get local variable's value
     OP_SET_LOCAL,     // sets a new value to a local variable
+    OP_SYMBOL,        // Unique identifier used for `GOTO` instructions
+    OP_GOTO,          // Goes to exact ip by Symbol
+    OP_JUMP,          // 'Forced' jump
+    OP_JUMP_IF_FALSE  // Conditional jump. Skip N bytes of code by applying an `offset` to `ip`
 } OpCode;
 
 // Chunk acts like a dynamic array
