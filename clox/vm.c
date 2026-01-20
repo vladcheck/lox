@@ -7,6 +7,7 @@
 #include "debug.h"
 #include "object.h"
 #include "memory.h"
+#include "parser.h"
 #include "compiler.h"
 #include "vm.h"
 

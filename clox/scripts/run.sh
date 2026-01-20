@@ -1,5 +1,5 @@
 #!/bin/zsh
 set -e
 
-./compile.sh
+./scripts/compile.sh
 ./main
