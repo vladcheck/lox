@@ -88,6 +88,8 @@ int disassembleInstruction(Chunk *chunk, int offset)
         return jumpInstruction("OP_JUMP", 1, chunk, offset);
     case OP_JUMP_IF_FALSE:
         return jumpInstruction("OP_JUMP_IF_FALSE", 1, chunk, offset);
+    case OP_LOOP:
+        return jumpInstruction("OP_LOOP", -1, chunk, offset);
     case OP_NEGATE:
         return simpleInstruction("OP_NEGATE", offset);
     case OP_ADD:
@@ -109,7 +111,8 @@ int disassembleInstruction(Chunk *chunk, int offset)
     case OP_DIAMOND:
         return simpleInstruction("OP_DIAMOND", offset);
     case OP_GOTO:
-        return jumpInstruction("OP_GOTO", 1, chunk, offset);
+        int sign = offset > 0 ? 1 : -1;
+        return jumpInstruction("OP_GOTO", sign, chunk, offset);
     default:
         printf("Unknown opcode %d\n", instruction);
         return offset + 1;
