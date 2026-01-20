@@ -2,8 +2,8 @@
 #define clox_memory_h
 
 #include "common.h"
-#include "vm.h"
 #include "object.h"
+#include "vm.h"
 
 #define ALLOCATE(type, count) \
     (type *)reallocate(NULL, 0, sizeof(type) * (count))

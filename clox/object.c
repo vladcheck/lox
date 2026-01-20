@@ -2,10 +2,8 @@
 #include <string.h>
 
 #include "memory.h"
-#include "object.h"
 #include "table.h"
-#include "value.h"
-#include "vm.h"
+#include "object.h"
 
 #define ALLOCATE_OBJ(vm, type, objectType) \
     (type *)allocateObject(vm, sizeof(type), objectType)
@@ -46,8 +44,9 @@ static uint32_t hashString(const char *key, int length)
 
 // Takes ownership of preallocated `ObjString` on heap.
 // @return Pointer to `ObjString`'s first character
-ObjString *takeString(VM *vm, char *chars, int length, uint32_t hash)
+ObjString *takeString(VM *vm, char *chars, int length)
 {
+    uint32_t hash = hashString(chars, length);
     ObjString *interned = tableFindString(&vm->strings, chars, length, hash);
     if (interned != NULL)
     {

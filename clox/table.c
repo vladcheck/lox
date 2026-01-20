@@ -111,7 +111,7 @@ bool tableGet(Table *table, ObjString *key, Value *value)
 }
 
 // Adds the given key/value pair to the given hash table
-bool tableSet(Table *table, ObjString *key, Value value)
+void tableSet(Table *table, ObjString *key, Value value)
 {
     if (table->count + 1 > table->capacity * TABLE_MAX_LOAD)
     {

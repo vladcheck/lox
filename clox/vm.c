@@ -7,9 +7,8 @@
 #include "debug.h"
 #include "object.h"
 #include "memory.h"
-#include "vm.h"
 #include "compiler.h"
-#include "table.h"
+#include "vm.h"
 
 static void resetStack(VM *vm)
 {
@@ -117,6 +116,15 @@ InterpretResult run(VM *vm)
     uint8_t instruction;
     switch (instruction = READ_BYTE())
     {
+    case OP_POP:
+        pop();
+        break;
+    case OP_PRINT:
+    {
+        printValue(pop(vm));
+        printf("\n");
+        break;
+    }
     case OP_DIAMOND:
     {
         Value b = pop(vm);
@@ -209,8 +217,6 @@ InterpretResult run(VM *vm)
         break;
     case OP_RETURN:
     {
-        printValue(pop(vm));
-        printf("\n");
         return INTERPRET_OK;
     }
     }

@@ -10,6 +10,7 @@ typedef enum
     OP_CONSTANT,
     OP_CONSTANT_LONG,
     OP_NEGATE,
+    OP_PRINT,
     OP_NIL,
     OP_TRUE,
     OP_FALSE,
@@ -25,6 +26,7 @@ typedef enum
     OP_SUBTRACT,
     OP_MULTIPLY,
     OP_DIVIDE,
+    OP_POP // pops value off of stack and forgets it
 } OpCode;
 
 // Chunk acts like a dynamic array
