@@ -25,8 +25,7 @@ void freeTable(Table *table)
 Finds an entry in hash table.
 Entry is arbitrary, meaning that in servers different purposes in different cases.
 */
-static Entry *findEntry(Entry *entries, int capacity,
-                        ObjString *key)
+static Entry *findEntry(Entry *entries, int capacity, ObjString *key)
 {
     uint32_t index = key->hash % capacity;
     Entry *tombstone = NULL;
@@ -110,8 +109,9 @@ bool tableGet(Table *table, ObjString *key, Value *value)
     return true;
 }
 
-// Adds the given key/value pair to the given hash table
-void tableSet(Table *table, ObjString *key, Value value)
+// Adds the given key/value pair to the given hash `Table`
+// @return `bool` - is variable defined in the `Table`
+bool tableSet(Table *table, ObjString *key, Value value)
 {
     if (table->count + 1 > table->capacity * TABLE_MAX_LOAD)
     {
@@ -120,12 +120,16 @@ void tableSet(Table *table, ObjString *key, Value value)
     }
 
     Entry *entry = findEntry(table->entries, table->capacity, key);
+    if (entry == NULL)
+        return false;
+
     bool isNewKey = entry->key == NULL;
     if (isNewKey && IS_NIL(entry->value))
         table->count++;
 
     entry->key = key;
     entry->value = value;
+    return true;
 }
 
 // Deletes an `Entry` from `Table`

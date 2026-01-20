@@ -6,27 +6,30 @@
 
 typedef enum
 {
-    OP_RETURN,
-    OP_CONSTANT,
-    OP_CONSTANT_LONG,
-    OP_NEGATE,
-    OP_PRINT,
-    OP_NIL,
-    OP_TRUE,
-    OP_FALSE,
-    OP_NOT,
-    OP_OR,
-    OP_XOR,
-    OP_AND,
-    OP_EQUAL,
-    OP_GREATER,
-    OP_LESS,
-    OP_ADD,
-    OP_DIAMOND,
-    OP_SUBTRACT,
-    OP_MULTIPLY,
-    OP_DIVIDE,
-    OP_POP // pops value off of stack and forgets it
+    OP_RETURN,        // `return` statement
+    OP_CONSTANT,      // 16-bit constant
+    OP_CONSTANT_LONG, // 32-bit constant
+    OP_NEGATE,        // unary negation
+    OP_PRINT,         // print a
+    OP_NIL,           // nil
+    OP_TRUE,          // true
+    OP_FALSE,         // false
+    OP_NOT,           // !a
+    OP_OR,            // a || b
+    OP_XOR,           // a xor b
+    OP_AND,           // a && b
+    OP_EQUAL,         // a == b
+    OP_GREATER,       // a > b
+    OP_LESS,          // a < b
+    OP_DIAMOND,       // a <> b
+    OP_ADD,           // a + b
+    OP_SUBTRACT,      // a - b
+    OP_MULTIPLY,      // a * b
+    OP_DIVIDE,        // binary division
+    OP_POP,           // pop value off of stack and forgets it
+    OP_DEFINE_GLOBAL, // define global variable
+    OP_GET_GLOBAL,    // get global variable's value
+    OP_SET_GLOBAL,    // sets a new value to global variable
 } OpCode;
 
 // Chunk acts like a dynamic array

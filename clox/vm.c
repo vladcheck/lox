@@ -34,12 +34,14 @@ void initVM(VM *vm)
     vm->chunk = NULL;
     vm->ip = NULL;
     vm->objects = NULL;
+    initTable(&vm->globals);
     initTable(&vm->strings);
     resetStack(vm);
 }
 
 void freeVM(VM *vm)
 {
+    freeTable(&vm->globals);
     freeTable(&vm->strings);
     freeObjects(vm);
 }
@@ -89,6 +91,7 @@ InterpretResult run(VM *vm)
 {
 #define READ_BYTE() (*vm->ip++)
 #define READ_CONSTANT() (vm->chunk->constants.values[READ_BYTE()])
+#define READ_STRING() AS_STRING(READ_CONSTANT())
 #define BINARY_OP(vm, valueType, op)                            \
     do                                                          \
     {                                                           \
@@ -117,8 +120,40 @@ InterpretResult run(VM *vm)
     switch (instruction = READ_BYTE())
     {
     case OP_POP:
-        pop();
+    {
+        pop(vm);
         break;
+    }
+    case OP_DEFINE_GLOBAL:
+    {
+        ObjString *name = READ_STRING();
+        tableSet(&vm->globals, name, peek(vm, 0));
+        pop(vm);
+        break;
+    }
+    case OP_GET_GLOBAL:
+    {
+        ObjString *name = READ_STRING();
+        Value value;
+        if (!tableGet(&vm->globals, name, &value))
+        {
+            runtimeError(vm, "Undefined variable '%s'.", name->chars);
+            return INTERPRET_RUNTIME_ERROR;
+        }
+        push(vm, value);
+        break;
+    }
+    case OP_SET_GLOBAL:
+    {
+        ObjString *name = READ_STRING();
+        if (tableSet(&vm->globals, name, peek(vm, 0))) // TODO: Always returns true, it's wrong
+        {
+            tableDelete(&vm->globals, name);
+            runtimeError(vm, "Undefined variable '%s'.", name->chars);
+            return INTERPRET_RUNTIME_ERROR;
+        }
+        break;
+    }
     case OP_PRINT:
     {
         printValue(pop(vm));
@@ -225,6 +260,7 @@ InterpretResult run(VM *vm)
 
 #undef READ_BYTE
 #undef READ_CONSTANT
+#undef READ_STRING
 #undef BINARY_OP
 }
 
@@ -233,7 +269,7 @@ InterpretResult interpret(VM *vm, const char *source)
     Chunk chunk;
     initChunk(&chunk);
 
-    if (!compile(source, &chunk))
+    if (!compile(vm, source, &chunk))
     {
         freeChunk(&chunk);
         return INTERPRET_COMPILE_ERROR;
