@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "common.h"
 #include "parser.h"
@@ -11,7 +12,7 @@
 #endif
 
 Parser parser;
-extern Compiler *compiler;
+extern Compiler *current;
 Chunk *compilingChunk;
 
 static void expression(VM *vm);
@@ -233,19 +234,133 @@ static void expression(VM *vm)
     parsePrecedence(vm, PREC_ASSIGNMENT);
 }
 
+static void beginScope()
+{
+    current->scopeDepth++;
+}
+
+static bool hasLocalVariables()
+{
+    return current->localCount > 0;
+}
+
+static bool localsBelongToCurrentScope()
+{
+    return current->locals[current->localCount - 1].depth > current->scopeDepth;
+}
+
+static void endScope()
+{
+    current->scopeDepth--;
+
+    // Pop local variables from stack
+    while (hasLocalVariables() && localsBelongToCurrentScope())
+    {
+        emitByte(OP_POP);
+        current->localCount--;
+    }
+}
+
+static void block(VM *vm)
+{
+    while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF))
+        declaration(vm);
+
+    consume(TOKEN_RIGHT_BRACE, "Expect '}' after block.");
+}
+
 static uint8_t identifierConstant(VM *vm, Token *name)
 {
     return makeConstant(OBJ_VAL(copyString(vm, name->start, name->length)));
 }
 
+// Checks if two `Identifier`s are equal by value
+static bool identifiersEqual(Token *a, Token *b)
+{
+    if (a->length != b->length)
+        return false;
+    return memcmp(a->start, b->start, a->length) == 0;
+}
+
+// Get index of `Local` variable
+// @return `0` or more - the index; `-1` - variable is actually global
+static int resolveLocal(Compiler *compiler, Token *name)
+{
+    int lastIndex = compiler->localCount - 1;
+    for (int i = lastIndex; i >= 0; i--)
+    {
+        Local *local = &compiler->locals[i];
+        if (local->depth == -1) // Ununitialized
+            error("Can't read local variable in its own initializer.");
+        if (identifiersEqual(name, &local->name))
+            return i;
+    }
+
+    return -1;
+}
+
+// Adds a new `Local` variable to current scope
+static void addLocal(Token name)
+{
+    if (current->localCount == UINT8_COUNT)
+    {
+        error("Too many local variables in current scope.");
+        return;
+    }
+
+    Local *local = &current->locals[current->localCount++];
+    local->name = name;
+    local->depth = -1; // Ununitialized variable
+}
+
+// Declares `Local` variable's existance in current scope
+static void declareVariable()
+{
+    if (current->scopeDepth == 0)
+        return;
+
+    Token *name = &parser.previous;
+    for (int i = current->localCount - 1; i >= 0; i--)
+    {
+        Local *local = &current->locals[i];
+        if (local->depth != -1 && local->depth < current->scopeDepth)
+            break;
+
+        if (identifiersEqual(name, &local->name))
+            error("Already a variable with this name in this scope.");
+    }
+
+    addLocal(*name);
+}
+
 static uint8_t parseVariable(VM *vm, const char *errorMessage)
 {
     consume(TOKEN_IDENTIFIER, errorMessage);
+
+    declareVariable();
+    if (current->scopeDepth > 0)
+        return 0;
+
     return identifierConstant(vm, &parser.previous);
 }
 
+// Marks `Local` variable as usable in current scope
+static void markInitialized()
+{
+    int currentScopeDepth = current->scopeDepth;
+    int last = current->localCount - 1;
+    current->locals[last].depth = currentScopeDepth;
+}
+
+// Defines a variable by marking it useful in current scope
 static void defineVariable(uint8_t global)
 {
+    if (current->scopeDepth > 0)
+    {
+        markInitialized();
+        return;
+    }
+
     emitBytes(OP_DEFINE_GLOBAL, global);
 }
 
@@ -306,8 +421,15 @@ static void synchronize()
 
 static void statement(VM *vm)
 {
+
     if (match(TOKEN_PRINT))
         printStatement(vm);
+    else if (match(TOKEN_LEFT_BRACE))
+    {
+        beginScope();
+        block(vm);
+        endScope();
+    }
     else
         expressionStatement(vm);
 }
@@ -344,14 +466,27 @@ static void string(VM *vm, bool canAssign)
 
 static void namedVariable(VM *vm, Token name, bool canAssign)
 {
-    uint8_t arg = identifierConstant(vm, &name);
+    uint8_t getOp, setOp;
+    int arg = resolveLocal(current, &name);
+    if (arg != -1)
+    {
+        getOp = OP_GET_LOCAL;
+        setOp = OP_SET_LOCAL;
+    }
+    else
+    {
+        arg = identifierConstant(vm, &name);
+        getOp = OP_GET_GLOBAL;
+        setOp = OP_SET_GLOBAL;
+    }
+
     if (canAssign && match(TOKEN_EQUAL))
     {
         expression(vm);
-        emitBytes(OP_SET_GLOBAL, arg);
+        emitBytes(setOp, (uint8_t)arg);
     }
     else
-        emitBytes(OP_GET_GLOBAL, arg);
+        emitBytes(getOp, (uint8_t)arg);
 }
 
 static void variable(VM *vm, bool canAssign)

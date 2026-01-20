@@ -26,10 +26,13 @@ typedef enum
     OP_SUBTRACT,      // a - b
     OP_MULTIPLY,      // a * b
     OP_DIVIDE,        // binary division
-    OP_POP,           // pop value off of stack and forgets it
+    OP_POP,           // pop value off of stack and discard it
+    OP_POPN,          // repeat OP_POP for N times
     OP_DEFINE_GLOBAL, // define global variable
     OP_GET_GLOBAL,    // get global variable's value
-    OP_SET_GLOBAL,    // sets a new value to global variable
+    OP_SET_GLOBAL,    // sets a new value to a global variable
+    OP_GET_LOCAL,     // get local variable's value
+    OP_SET_LOCAL,     // sets a new value to a local variable
 } OpCode;
 
 // Chunk acts like a dynamic array
